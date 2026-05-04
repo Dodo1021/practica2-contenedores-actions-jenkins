@@ -1,0 +1,41 @@
+name: Email notification by branch
+
+on:
+  push:
+    branches:
+      - main
+      - feature_a
+      - feature_b
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  notify-by-github-email:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create issue that triggers GitHub email notification
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const branch = context.ref.replace('refs/heads/', '');
+            const sha = context.sha.slice(0, 7);
+            const title = `Cambios subidos a rama ${branch}`;
+            const body = [
+              'Notificación automática generada por GitHub Actions.',
+              '',
+              `- Rama: ${branch}`,
+              `- Autor: ${context.actor}`,
+              `- Commit: ${sha}`,
+              `- Mensaje: ${context.payload.head_commit?.message || 'Sin mensaje'}`,
+              `- Run: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
+            ].join('\n');
+
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title,
+              body,
+              labels: ['notificacion-automatica']
+            });

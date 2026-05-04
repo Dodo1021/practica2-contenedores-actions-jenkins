@@ -7,7 +7,7 @@
 - Nombre 3 (si aplica)
 
 ### Liga del repositorio
-- <PEGA_AQUI_LA_LIGA_DE_TU_REPO>
+- https://github.com/Dodo1021/practica2-contenedores-actions-jenkins
 
 ## Tabla de evaluación
 
@@ -51,10 +51,6 @@ on:
       - feature_a
       - feature_b
 
-jobs:
-  send-email:
-    runs-on: ubuntu-latest
-    steps:
 permissions:
   contents: read
   issues: write
@@ -132,13 +128,13 @@ docker pull jenkins/jenkins:lts-jdk21
 Después se creó un volumen persistente y se levantó el contenedor:
 
 ```bash
-docker volume create jenkins_home
+docker volume create jenkins_home_practica2
 
 docker run -d \
   --name jenkins-practica2 \
-  -p 8080:8080 \
-  -p 50000:50000 \
-  -v jenkins_home:/var/jenkins_home \
+  -p 8081:8080 \
+  -p 50001:50000 \
+  -v jenkins_home_practica2:/var/jenkins_home \
   jenkins/jenkins:lts-jdk21
 ```
 
@@ -148,46 +144,31 @@ Con el contenedor activo, se obtuvo la contraseña inicial:
 docker exec jenkins-practica2 cat /var/jenkins_home/secrets/initialAdminPassword
 ```
 
-Luego se abrió Jenkins en `http://localhost:8080`, se completó la instalación inicial y se creó una tarea tipo **Pipeline**.
+Luego se abrió Jenkins en `http://localhost:8081`, se completó la instalación inicial y se creó una tarea freestyle llamada `tarea-practica2`.
 
-### Pipeline utilizado
-Archivo: `docs/jenkins-pipeline.groovy`
+### Tarea ejecutada
+La tarea contiene un script de shell muy simple:
 
-```groovy
-pipeline {
-  agent any
-
-  stages {
-    stage('Checkout') {
-      steps {
-        echo 'Clonando repositorio...'
-        checkout scm
-      }
-    }
-
-    stage('Build') {
-      steps {
-        sh 'echo "Compilación / tarea demo correcta" > build.txt'
-      }
-    }
-
-    stage('Test') {
-      steps {
-        sh 'cat build.txt'
-      }
-    }
-  }
-
-  post {
-    success {
-      echo 'Pipeline terminada correctamente.'
-    }
-  }
-}
+```bash
+echo "Compilación / tarea demo correcta" > build.txt
+cat build.txt
 ```
 
-### Resultado esperado
-La tarea debe ejecutarse correctamente y mostrar en consola el contenido de `build.txt`, probando que Jenkins sí pudo correr una tarea pipeline básica.
+### Resultado real obtenido
+La consola del build mostró exactamente esto:
+
+```text
+Started by user admin
+Running as SYSTEM
+Building in workspace /var/jenkins_home/workspace/tarea-practica2
+[tarea-practica2] $ /bin/sh -xe /tmp/jenkins1014500840321425849.sh
++ echo Compilación / tarea demo correcta
++ cat build.txt
+Compilación / tarea demo correcta
+Finished: SUCCESS
+```
+
+Esto prueba que Jenkins sí pudo ejecutar una tarea correctamente dentro del contenedor.
 
 ### Evidencias que debes pegar aquí
 1. Captura de `docker ps` mostrando el contenedor `jenkins-practica2`.
