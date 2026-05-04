@@ -32,7 +32,7 @@ El enfoque de la práctica fue entender no solo cómo ejecutar comandos, sino pa
 ## Acción de notificación por correo
 Se creó una acción de GitHub que se ejecuta cada vez que hay un `push` a cualquiera de las tres ramas requeridas: `main`, `feature_a` y `feature_b`.
 
-El workflow usa `actions/github-script` para crear automáticamente un issue con un título dependiente de la rama. GitHub envía la notificación por correo del nuevo issue al usuario suscrito al repositorio, por lo que la bandeja de entrada recibe un email disparado por la acción. El asunto cambia dinámicamente según la rama que recibió el `push`, por ejemplo:
+El workflow usa la acción `dawidd6/action-send-mail@v6` para enviar un correo real mediante SMTP cada vez que hay un `push` a una de las ramas solicitadas. El asunto cambia dinámicamente según la rama que recibió el `push`, por ejemplo:
 
 - `Cambios subidos a rama main`
 - `Cambios subidos a rama feature_a`
@@ -51,45 +51,36 @@ on:
       - feature_a
       - feature_b
 
-permissions:
-  contents: read
-  issues: write
-
 jobs:
-  notify-by-github-email:
+  send-email:
     runs-on: ubuntu-latest
     steps:
-      - name: Create issue that triggers GitHub email notification
-        uses: actions/github-script@v7
+      - name: Send email
+        uses: dawidd6/action-send-mail@v6
         with:
-          script: |
-            const branch = context.ref.replace('refs/heads/', '');
-            const sha = context.sha.slice(0, 7);
-            const title = `Cambios subidos a rama ${branch}`;
-            const body = [
-              'Notificación automática generada por GitHub Actions.',
-              '',
-              `- Rama: ${branch}`,
-              `- Autor: ${context.actor}`,
-              `- Commit: ${sha}`,
-              `- Mensaje: ${context.payload.head_commit?.message || 'Sin mensaje'}`,
-              `- Run: https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`
-            ].join('\n');
+          server_address: smtp.gmail.com
+          server_port: 465
+          secure: true
+          username: ${{ secrets.SMTP_USERNAME }}
+          password: ${{ secrets.SMTP_PASSWORD }}
+          subject: Cambios subidos a rama ${{ github.ref_name }}
+          to: ${{ secrets.MAIL_TO }}
+          from: GitHub Actions <${{ secrets.SMTP_USERNAME }}>
+          body: |
+            Se subieron cambios al repositorio.
 
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title,
-              body,
-              labels: ['notificacion-automatica']
-            });
+            Rama: ${{ github.ref_name }}
+            Repositorio: ${{ github.repository }}
+            Autor: ${{ github.actor }}
+            Commit: ${{ github.sha }}
+            Mensaje: ${{ github.event.head_commit.message }}
 ```
 
 ### Qué evidencias debes pegar aquí
 1. Captura del archivo YAML en GitHub.
 2. Captura del run exitoso en la pestaña **Actions**.
-3. Captura del issue creado automáticamente.
-4. Captura del correo de notificación de GitHub recibido en la bandeja de entrada.
+3. Captura del correo recibido en la bandeja de entrada con el asunto correcto según la rama.
+4. Si ocultas credenciales en capturas, reemplázalas por asteriscos o datos ficticios.
 
 ---
 
