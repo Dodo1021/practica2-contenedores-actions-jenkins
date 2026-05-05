@@ -1,0 +1,9 @@
+{
+  "name": "actividad-contenedor",
+  "version": "1.0.0",
+  "main": "app.js",
+  "license": "MIT",
+  "dependencies": {
+    "moment": "^2.30.1"
+  }
+}

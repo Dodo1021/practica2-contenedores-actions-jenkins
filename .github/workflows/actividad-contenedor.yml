@@ -1,0 +1,23 @@
+name: Actividad contenedor node
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  ejecutar-en-contenedor:
+    runs-on: ubuntu-latest
+    container:
+      image: node:20-bullseye
+    steps:
+      - name: Checkout del repositorio
+        uses: actions/checkout@v4
+
+      - name: Instalar dependencias
+        working-directory: actividad-contenedor
+        run: npm install
+
+      - name: Ejecutar app Node
+        working-directory: actividad-contenedor
+        run: node app.js
